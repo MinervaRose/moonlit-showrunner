@@ -2,29 +2,33 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
-![OpenAI](https://img.shields.io/badge/OpenAI-Structured%20Outputs-412991)
-![MoviePy](https://img.shields.io/badge/MoviePy-MP4%20Assembly-orange)
-![Status](https://img.shields.io/badge/status-v0.1%20prototype-yellow)
+![OpenAI](https://img.shields.io/badge/OpenAI-Text%20%2B%20Images-412991)
+![MoviePy](https://img.shields.io/badge/MoviePy-Visual%20Animatic-orange)
+![Status](https://img.shields.io/badge/status-v0.3.1%20prototype-yellow)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-**An AI-assisted short-drama pipeline from premise to MP4.**
+**Moonlit Showrunner is an AI-assisted short-drama pipeline that turns a magical story premise into a structured production package, generated scene images, and a visual animatic MP4.**
 
-Moonlit Showrunner turns a simple magical or emotional premise into a structured short-drama production package:
+The project explores how an AI system can coordinate several creative roles — showrunner, scriptwriter, storyboard planner, visual director, continuity checker, and editor — while keeping the outputs inspectable and editable.
 
-- story brief
-- logline
-- character cards
-- 6-scene script
-- storyboard
-- visual style bible
-- image/video prompts
-- continuity report
-- edit decision list
-- simple MP4 assembled from generated title cards, scene cards, captions, and transitions
+It currently generates:
 
-The project is a polished local/OpenAI prototype exploring how structured LLM workflows can support short-form cinematic storytelling.
+* story brief
+* logline
+* character cards
+* 6-scene script
+* storyboard
+* visual style bible
+* scene image prompts
+* continuity report
+* edit decision list
+* stylized 3D animated still images for each shot
+* MP4-ready frames with overlays, captions, and timing
+* visual animatic MP4 assembled from still images or fallback scene cards
 
-> **Current status:** v0.1 is a working prototype. It generates the narrative production package with the OpenAI API and assembles a simple MP4 from generated cards/frames. It does **not** yet generate real AI video footage. Future versions may connect image or video generation models for fully visual scene assets.
+> **Current status — v0.3.1:**
+> Moonlit Showrunner now generates a structured story package, stylized scene images, MP4-ready frames, and a visual animatic video.
+> It does **not** yet generate full motion AI video clips. The final MP4 is assembled from still images, captions, overlays, and edit-plan timing.
 
 ---
 
@@ -38,50 +42,56 @@ Sample premise:
 
 ## Screenshots
 
-### Story package generation
+### Main interface and story brief
 
 ![Moonlit Showrunner main interface](assets/screenshots/image-1.png)
-
-### Story brief and character cards
-
 ![Generated story brief](assets/screenshots/image-2.png)
 
 ### Script and storyboard planning
 
 ![Generated script](assets/screenshots/image-3.png)
-
 ![Generated storyboard](assets/screenshots/image-4.png)
 
-### Visual prompts, continuity, and edit plan
+### Visual prompts and continuity pass
 
 ![Visual prompts and style bible](assets/screenshots/image-5.png)
-
 ![Continuity report](assets/screenshots/image-6.png)
 
+### Edit plan and exports
+
 ![Edit plan](assets/screenshots/image-8.png)
-
-### Exports
-
 ![Exports tab](assets/screenshots/image-10.png)
 
 ---
 
-## What v0.1 does
+## What v0.3.1 does
 
-Version 0.1 demonstrates the core pipeline:
+Version 0.3.1 demonstrates this pipeline:
 
 ```text
 Premise
 → structured story package
 → script
 → storyboard
-→ visual prompt plan
+→ scene image prompts
+→ stylized generated still images
 → continuity report
 → edit decision list
-→ MP4 card assembly
+→ MP4-ready frames
+→ visual animatic MP4 assembly
 ```
 
-The generated MP4 is currently a **prototype assembly**: it uses generated cards/frames and captions rather than real AI-generated video clips. This keeps the first version reproducible, lightweight, and easy to run locally.
+The generated MP4 is currently a **prototype animatic**. The image prompts are biased toward a stylized 3D family-animation look rather than photorealistic live-action actors. It uses still images plus overlays, captions, and edit-plan timing — not full AI-generated motion video.
+
+---
+
+## What changed in v0.3.1
+
+* Added stronger visual direction toward a stylized 3D family-animation look.
+* Reduced photorealistic live-action output by steering prompts away from realistic actors.
+* Improved the Streamlit flow so Step 2 and Step 3 buttons no longer become mysteriously disabled.
+* Updated the Generated Images tab to show both raw generated images and MP4-ready assembled frames.
+* Improved the project framing as a visual animatic prototype rather than a full AI video generator.
 
 ---
 
@@ -90,17 +100,20 @@ The generated MP4 is currently a **prototype assembly**: it uses generated cards
 ```mermaid
 flowchart TD
     A[User premise] --> B[Streamlit interface]
-    B --> C[Showrunner pipeline]
-    C --> D[OpenAI client]
+    B --> C[Moonlit pipeline]
+    C --> D[OpenAI text client]
     D --> E[Structured story JSON]
     E --> F[Story brief + characters]
     E --> G[Script + storyboard]
     E --> H[Visual prompts + style bible]
     E --> I[Continuity report]
     E --> J[Edit decision list]
-    J --> K[MoviePy / PIL video assembler]
-    K --> L[Prototype MP4]
-    E --> M[Markdown + JSON exports]
+    H --> K[OpenAI image client]
+    K --> L[Generated still images]
+    L --> M[MoviePy / PIL assembler]
+    J --> M
+    M --> N[Visual animatic MP4]
+    E --> O[Markdown + JSON exports]
 ```
 
 ---
@@ -124,6 +137,7 @@ Then add your API key:
 ```toml
 OPENAI_API_KEY = "your-key-here"
 OPENAI_MODEL = "gpt-4.1-mini"
+OPENAI_IMAGE_MODEL = "gpt-image-1"
 ```
 
 Run:
@@ -132,38 +146,49 @@ Run:
 .venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
 ```
 
-If no API key is provided, the app can still run in **mock mode** using a built-in sample story package.
+If no API key is provided, or if you want to test without spending credits, the app can run in **mock mode** using a built-in sample story package and placeholder scene images.
 
 ---
 
 ## How to use the app
 
-1. Enter or keep the sample story premise.
-2. Click **Generate story package**.
+1. Enter or keep the sample premise.
+2. Click **Step 1 — Generate story package**.
 3. Review the generated tabs: story brief, script, storyboard, visual prompts, continuity, and edit plan.
-4. Click **Assemble MP4** to create a simple prototype video from generated cards and captions.
-5. Download the JSON and Markdown exports from the **Exports** tab.
+4. Click **Step 2 — Generate scene images**.
+5. Click **Step 3 — Assemble MP4 from current run**.
+6. Download the JSON and Markdown exports from the **Exports** tab.
+
+Each run is saved into a timestamped folder under:
+
+```text
+outputs/runs/
+```
 
 ---
 
 ## Command-line generation
 
-Generate a sample package and MP4 without Streamlit:
+Generate a sample package, placeholder images, and MP4 without Streamlit:
 
 ```powershell
 .venv\Scripts\python.exe scripts\generate_sample.py
 ```
 
-Outputs are written to:
+The app uses run-specific folders such as:
 
 ```text
 outputs/
-├── story_package.json
-├── story_package.md
-└── moonlit_showrunner_demo.mp4
+└── runs/
+    └── 2026-06-09_153200/
+        ├── story_package.json
+        ├── story_package.md
+        ├── images/
+        ├── frames/
+        └── moonlit_showrunner_animatic.mp4
 ```
 
-For public examples, this repository can also include curated outputs under:
+Curated earlier outputs can still live under:
 
 ```text
 outputs/v0.1/
@@ -179,6 +204,7 @@ moonlit-showrunner/
 │   ├── streamlit_app.py
 │   ├── pipeline.py
 │   ├── openai_client.py
+│   ├── image_client.py
 │   ├── schemas.py
 │   ├── sample_data.py
 │   ├── agents/
@@ -190,7 +216,8 @@ moonlit-showrunner/
 │       └── ...
 ├── docs/
 ├── outputs/
-│   └── v0.1/              # curated prototype outputs for GitHub
+│   ├── runs/
+│   └── v0.1/
 ├── scripts/
 ├── requirements.txt
 ├── README.md
@@ -201,31 +228,33 @@ moonlit-showrunner/
 
 ## Current limitations
 
-- v0.1 does not generate real AI video footage.
-- The MP4 is assembled from generated cards/frames and captions.
-- Character consistency is represented in the visual style bible, not enforced through an image/video model yet.
-- The UI is an early prototype and will be refined in future versions.
-- Audio is currently represented as edit-plan guidance rather than a fully generated soundtrack.
+* v0.3.1 does **not** generate full AI motion video clips.
+* The final MP4 is assembled from still images or fallback scene cards.
+* Character consistency is guided through prompts and the style bible, but not fully enforced like a dedicated animation pipeline would.
+* Audio is still represented as edit-plan guidance rather than a fully generated soundtrack.
+* The current image generation step does not yet include iterative review or shot regeneration controls.
+* The visual result depends on the image model’s interpretation of the generated prompts.
 
 ---
 
 ## Planned improvements
 
-- clearer two-step UI: **Step 1 — Generate story package**, **Step 2 — Assemble MP4**
-- timestamped output folders for each run
-- generated illustrated frames for each storyboard shot
-- optional image-generation integration
-- optional video-generation integration
-- improved MP4 styling, motion, transitions, and typography
-- demo article explaining the design of an AI showrunner pipeline
+* stronger review controls for regenerating only one scene image
+* selective prompt editing before image generation
+* optional caption styling controls
+* improved pan/zoom and transition effects in the animatic
+* optional voiceover or soundtrack layer
+* optional export of a production bible
+* future integration with true AI video generation
+* polished blog article / portfolio write-up
 
 ---
 
 ## Why this exists
 
-Short-form narrative production usually requires several creative roles: writer, storyboard artist, visual director, continuity checker, and editor. Moonlit Showrunner explores how those roles can be represented as a structured AI pipeline, with outputs that remain reviewable and editable by a human creator.
+Short-form narrative production usually requires several creative roles: writer, storyboard artist, visual director, continuity checker, and editor. Moonlit Showrunner explores how those roles can be represented as a transparent AI pipeline, with outputs that remain reviewable and editable by a human creator.
 
-The project is intentionally small and transparent: it shows the production logic before trying to hide everything behind a final generated video.
+The project is intentionally honest about its current scope: it is a **visual animatic prototype**, not yet a finished AI film generator.
 
 ---
 

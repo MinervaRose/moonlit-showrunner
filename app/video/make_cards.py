@@ -44,6 +44,16 @@ def _draw_wrapped(draw: ImageDraw.ImageDraw, text: str, xy: Tuple[int, int], fon
     return y
 
 
+def _cover_crop(image: Image.Image, size: Tuple[int, int]) -> Image.Image:
+    target_w, target_h = size
+    src_w, src_h = image.size
+    scale = max(target_w / src_w, target_h / src_h)
+    resized = image.resize((int(src_w * scale), int(src_h * scale)))
+    left = max(0, (resized.width - target_w) // 2)
+    top = max(0, (resized.height - target_h) // 2)
+    return resized.crop((left, top, left + target_w, top + target_h))
+
+
 def create_title_card(package: StoryPackage, out_path: Path) -> Path:
     img = _gradient_background(SIZE, top=(18, 20, 52), bottom=(151, 125, 185))
     overlay = Image.new("RGBA", SIZE, (0, 0, 0, 0))
@@ -56,7 +66,7 @@ def create_title_card(package: StoryPackage, out_path: Path) -> Path:
     small_font = _font(24)
     draw.text((140, 180), package.brief.title, font=title_font, fill=(255, 248, 230))
     _draw_wrapped(draw, package.brief.logline, (145, 300), sub_font, (255, 244, 220), width_chars=58, line_spacing=12)
-    draw.text((145, 520), "Moonlit Showrunner · AI short-drama prototype", font=small_font, fill=(255, 235, 190))
+    draw.text((145, 520), "Moonlit Showrunner · visual animatic prototype", font=small_font, fill=(255, 235, 190))
     img.convert("RGB").save(out_path, quality=95)
     return out_path
 
@@ -76,7 +86,6 @@ def create_scene_card(scene: Scene, edit: EditDecision, out_path: Path, palette_
     overlay = Image.new("RGBA", SIZE, (0, 0, 0, 0))
     d = ImageDraw.Draw(overlay)
     d.rounded_rectangle((80, 70, 1200, 650), radius=32, fill=(0, 0, 0, 70), outline=(255, 255, 255, 80), width=2)
-    # Decorative moon/star shapes
     d.ellipse((1020, 105, 1100, 185), fill=(255, 245, 210, 160))
     for x, y in [(180,120), (1120,260), (980,500), (250,570), (620,130)]:
         d.ellipse((x, y, x+5, y+5), fill=(255, 245, 220, 180))
@@ -92,5 +101,33 @@ def create_scene_card(scene: Scene, edit: EditDecision, out_path: Path, palette_
     draw.line((120, y+18, 1160, y+18), fill=(255,255,255,90), width=1)
     _draw_wrapped(draw, edit.on_screen_text, (120, y+48), caption, (255, 240, 190), width_chars=54, line_spacing=12)
     draw.text((120, 595), f"Camera: {scene.camera_direction}", font=small, fill=(230, 230, 240))
+    img.convert("RGB").save(out_path, quality=95)
+    return out_path
+
+
+def create_scene_frame_from_image(image_path: Path, scene: Scene, edit: EditDecision, out_path: Path) -> Path:
+    img = Image.open(image_path).convert("RGB")
+    img = _cover_crop(img, SIZE).convert("RGBA")
+
+    overlay = Image.new("RGBA", SIZE, (0, 0, 0, 0))
+    d = ImageDraw.Draw(overlay)
+    d.rounded_rectangle((45, 42, 355, 98), radius=18, fill=(0, 0, 0, 135))
+    d.rounded_rectangle((45, 520, 1235, 684), radius=22, fill=(0, 0, 0, 150))
+    d.rounded_rectangle((1025, 42, 1235, 98), radius=18, fill=(255, 255, 255, 68))
+    img = Image.alpha_composite(img, overlay)
+
+    draw = ImageDraw.Draw(img)
+    small = _font(24)
+    title = _font(28, bold=True)
+    caption = _font(36, bold=True)
+    meta = _font(22)
+
+    draw.text((65, 58), f"Scene {scene.scene_number} · {scene.title}", font=title, fill=(255, 245, 220))
+    draw.text((1050, 58), f"Shot {edit.shot_number}", font=small, fill=(255, 250, 235))
+
+    _draw_wrapped(draw, edit.on_screen_text, (72, 548), caption, (255, 248, 232), width_chars=48, line_spacing=8)
+    draw.text((72, 645), f"Transition: {edit.transition}", font=meta, fill=(240, 230, 220))
+    draw.text((355, 645), f"Audio: {edit.audio_note}", font=meta, fill=(240, 230, 220))
+
     img.convert("RGB").save(out_path, quality=95)
     return out_path

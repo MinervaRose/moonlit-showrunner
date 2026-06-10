@@ -5,14 +5,18 @@ import os
 from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
-from app.schemas import StoryPackage
+
 from app.sample_data import get_sample_story_package
+from app.schemas import StoryPackage
 
 load_dotenv()
 
 SYSTEM_PROMPT = """You are Moonlit Showrunner, an AI creative production pipeline.
 You transform a short premise into a coherent, emotionally satisfying short-drama production package.
 You must optimize for clear visual storytelling, low dialogue, strong emotional arc, and practical MP4 assembly.
+The visual direction should favor a stylized 3D family-animation look: expressive characters, rounded forms,
+warm magical lighting, storybook color palettes, soft cinematic depth, and charming non-photorealistic design.
+Avoid realistic live-action human actor aesthetics unless the user explicitly asks for them.
 Return only valid JSON matching the provided schema.
 """
 
@@ -26,7 +30,10 @@ Constraints:
 - Exactly 6 storyboard shots, one primary shot per scene.
 - Family-friendly, magical or emotional tone.
 - Minimal dialogue; prefer captions and visual storytelling.
-- Each video prompt must be usable for image or video generation.
+- Each video prompt must be usable for image generation and future video generation.
+- Make the imagery visually distinctive and cinematic.
+- Visual style: stylized 3D animated family-film look, expressive faces, rounded shapes, soft magical lighting, painterly textures, whimsical storybook atmosphere.
+- Avoid photorealistic live-action actors, documentary realism, uncanny faces, harsh realism, horror, or adult drama aesthetics.
 - Include a continuity report and token budget estimate.
 """
 
@@ -34,21 +41,19 @@ Constraints:
 def _make_schema_strict(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Adapt a Pydantic JSON schema for OpenAI Structured Outputs.
 
-    OpenAI requires every object in a strict JSON schema to declare:
-    - additionalProperties: false
-    - required: [all defined properties]
+    OpenAI expects every object in a strict schema to declare
+    additionalProperties: false. We also make required fields explicit.
     """
 
     def walk(node: Any) -> None:
         if isinstance(node, dict):
             if node.get("type") == "object":
                 node["additionalProperties"] = False
-                if "properties" in node and isinstance(node["properties"], dict):
-                    node["required"] = list(node["properties"].keys())
-
+                properties = node.get("properties")
+                if isinstance(properties, dict):
+                    node["required"] = list(properties.keys())
             for value in node.values():
                 walk(value)
-
         elif isinstance(node, list):
             for item in node:
                 walk(item)

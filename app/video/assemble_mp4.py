@@ -1,20 +1,33 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Dict, Optional
 
 from app.schemas import StoryPackage
-from app.video.make_cards import create_scene_card, create_title_card
+from app.video.make_cards import create_scene_card, create_scene_frame_from_image, create_title_card
 
 
-def assemble_story_video(package: StoryPackage, output_dir: Path) -> Path:
-    """Create an MP4 from generated title and scene cards.
+def _find_generated_image_map(output_dir: Path) -> Dict[int, Path]:
+    images_dir = output_dir / "images"
+    mapping: Dict[int, Path] = {}
+    if not images_dir.exists():
+        return mapping
+    for path in sorted(images_dir.glob("shot_*.png")):
+        try:
+            number = int(path.stem.split("_")[-1])
+            mapping[number] = path
+        except Exception:
+            continue
+    return mapping
 
-    The implementation uses MoviePy if available. It creates a real MP4 while
-    keeping the first prototype independent from external video generation APIs.
-    """
+
+def assemble_story_video(package: StoryPackage, output_dir: Path, use_generated_images: bool = True) -> Path:
+    """Create an MP4 from a title card plus either generated scene images or fallback scene cards."""
     output_dir.mkdir(parents=True, exist_ok=True)
     frames_dir = output_dir / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
+
+    generated_image_map = _find_generated_image_map(output_dir) if use_generated_images else {}
 
     title_path = create_title_card(package, frames_dir / "00_title.jpg")
     card_paths: list[Path] = [title_path]
@@ -24,29 +37,34 @@ def assemble_story_video(package: StoryPackage, output_dir: Path) -> Path:
     for idx, scene in enumerate(package.scenes, start=1):
         edit = edits_by_scene.get(scene.scene_number)
         if edit is None:
-            # Fallback synthetic edit object is avoided; use the scene duration.
-            duration = scene.duration_seconds
             from app.schemas import EditDecision
             edit = EditDecision(
                 order=idx,
                 scene_number=scene.scene_number,
                 shot_number=idx,
-                duration_seconds=duration,
+                duration_seconds=scene.duration_seconds,
                 on_screen_text=scene.dialogue_or_caption,
                 transition="cut",
                 audio_note=scene.sound_or_music_notes,
             )
-        path = create_scene_card(scene, edit, frames_dir / f"{idx:02d}_scene_{scene.scene_number}.jpg", palette_index=idx)
+
+        out_frame = frames_dir / f"{idx:02d}_scene_{scene.scene_number}.jpg"
+        source_img = generated_image_map.get(idx)
+        if source_img and source_img.exists():
+            path = create_scene_frame_from_image(source_img, scene, edit, out_frame)
+        else:
+            path = create_scene_card(scene, edit, out_frame, palette_index=idx)
+
         card_paths.append(path)
         durations.append(edit.duration_seconds)
 
-    video_path = output_dir / "moonlit_showrunner_demo.mp4"
+    video_path = output_dir / "moonlit_showrunner_animatic.mp4"
 
     try:
         try:
-            from moviepy.editor import ImageClip, concatenate_videoclips  # MoviePy 1.x
+            from moviepy.editor import ImageClip, concatenate_videoclips
         except Exception:
-            from moviepy import ImageClip, concatenate_videoclips  # MoviePy 2.x
+            from moviepy import ImageClip, concatenate_videoclips
 
         clips = []
         for path, duration in zip(card_paths, durations):
@@ -56,6 +74,7 @@ def assemble_story_video(package: StoryPackage, output_dir: Path) -> Path:
             else:
                 clip = clip.with_duration(duration)
             clips.append(clip)
+
         final = concatenate_videoclips(clips, method="compose")
         try:
             final.write_videofile(str(video_path), fps=24, codec="libx264", audio=False, verbose=False, logger=None)
@@ -65,7 +84,6 @@ def assemble_story_video(package: StoryPackage, output_dir: Path) -> Path:
         for clip in clips:
             clip.close()
     except Exception as exc:
-        # Last-resort fallback: create a manifest so the user can still inspect outputs.
         manifest = output_dir / "video_fallback_manifest.txt"
         manifest.write_text(
             "MoviePy video assembly failed. Generated frames are available here:\n"
