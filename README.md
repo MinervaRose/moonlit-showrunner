@@ -4,31 +4,31 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Text%20%2B%20Images-412991)
 ![MoviePy](https://img.shields.io/badge/MoviePy-Visual%20Animatic-orange)
-![Status](https://img.shields.io/badge/status-v0.3.1%20prototype-yellow)
+![Sora](https://img.shields.io/badge/Sora-Full%20Real%20Video-purple)
+![Status](https://img.shields.io/badge/status-v0.5%20prototype-yellow)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-**Moonlit Showrunner is an AI-assisted short-drama pipeline that turns a magical story premise into a structured production package, generated scene images, and a visual animatic MP4.**
+**An AI-assisted short-drama pipeline from premise to visual animatic and optional Sora-generated video output.**
 
-The project explores how an AI system can coordinate several creative roles — showrunner, scriptwriter, storyboard planner, visual director, continuity checker, and editor — while keeping the outputs inspectable and editable.
+Moonlit Showrunner turns a magical or emotional story premise into a structured short-drama production package and a simple visual animatic workflow.
 
 It currently generates:
 
-* story brief
-* logline
-* character cards
-* 6-scene script
-* storyboard
-* visual style bible
-* scene image prompts
-* continuity report
-* edit decision list
-* stylized 3D animated still images for each shot, displayed in the app and reused in the MP4 animatic
-* MP4-ready frames with overlays, captions, and timing
-* visual animatic MP4 assembled from still images or fallback scene cards
+- story brief
+- logline
+- character cards
+- 6-scene script
+- storyboard
+- visual style bible
+- scene image prompts
+- continuity report
+- edit decision list
+- generated still images for each shot *(new in v0.3)*
+- MP4 assembled from still images or fallback scene cards
 
-> **Current status — v0.3.1:**
-> Moonlit Showrunner now generates a structured story package, stylized scene images, MP4-ready frames, and a visual animatic video.
-> It does **not** yet generate full motion AI video clips. The final MP4 is assembled from still images, captions, overlays, and edit-plan timing.
+> **Current status:** v0.5 is a working prototype. It generates a structured narrative production package, stylized scene images, a visual animatic MP4, and—when explicitly enabled—one Sora video clip per storyboard shot, concatenated into a full video output.
+>
+> The project remains a prototype: character consistency across video clips is not yet fully enforced, and the Sora workflow is intentionally gated to avoid accidental paid video-generation calls.
 
 ---
 
@@ -42,31 +42,29 @@ Sample premise:
 
 ## Screenshots
 
-## Screenshots
-
 ### Main interface and story brief
 
-![Moonlit Showrunner main interface](assets/screenshots/image-1.png)
+The v0.5 interface includes the full pipeline: story generation, scene-image generation, animatic assembly, and optional full Sora video generation.
+
+![Moonlit Showrunner main interface with full Sora video button](assets/screenshots/image-1.png)
+
 ![Generated story brief](assets/screenshots/image-2.png)
 
 ### Script and storyboard planning
 
 ![Generated script](assets/screenshots/image-3.png)
+
 ![Generated storyboard](assets/screenshots/image-4.png)
 
 ### Visual prompts and continuity pass
 
 ![Visual prompts and style bible](assets/screenshots/image-5.png)
+
 ![Continuity report](assets/screenshots/image-6.png)
-
-### Edit plan and exports
-
-![Edit plan](assets/screenshots/image-8.png)
-![Exports tab](assets/screenshots/image-10.png)
 
 ### v0.3.1 visual animatic output
 
-The v0.3.1 prototype adds generated stylized scene images and assembles them into a visual animatic MP4.
+The v0.3.1 prototype added generated stylized scene images and assembled them into a visual animatic MP4.
 
 ![Generated scene images](assets/screenshots/image-12.png)
 
@@ -74,12 +72,38 @@ The v0.3.1 prototype adds generated stylized scene images and assembles them int
 
 ![Scene 5 from the visual animatic MP4](assets/screenshots/image-13.png)
 
+### v0.5 Sora safety controls
+
+The v0.5 Sora workflow includes explicit safety controls to prevent accidental paid full-video generation calls.
+
+![Sora video generation safety toggle](assets/screenshots/image-14.png)
+
+![Full Sora video generation confirmation gate](assets/screenshots/image-15.png)
+
 
 ---
 
-## What v0.3.1 does
+## Generated video output
 
-Version 0.3.1 demonstrates this pipeline:
+The v0.5 prototype can generate a full Sora-assisted video output from the structured story pipeline.
+
+[![Moonlit Showrunner v0.5 generated video output](assets/screenshots/image-16.png)](https://youtu.be/4bzG4uo8bso)
+
+[Watch the generated video output on YouTube](https://youtu.be/4bzG4uo8bso)
+
+This video is the generated short-drama output from Moonlit Showrunner v0.5. It was produced from the project’s pipeline: story package, storyboard, visual prompts, generated scene assets, Sora video clips, and final MP4 assembly.
+
+It is not a walkthrough of the app interface; a separate project demo video may be added later.
+
+---
+
+## Pipeline evolution
+
+Moonlit Showrunner has evolved in stages:
+
+### v0.3 / v0.3.1 — Visual animatic prototype
+
+The v0.3 line demonstrated the first complete creative pipeline:
 
 ```text
 Premise
@@ -87,25 +111,32 @@ Premise
 → script
 → storyboard
 → scene image prompts
-→ stylized generated still images
+→ generated still images
 → continuity report
 → edit decision list
-→ MP4-ready frames
 → visual animatic MP4 assembly
 ```
 
-The generated MP4 is currently a **prototype animatic**. The image prompts are biased toward a stylized 3D family-animation look rather than photorealistic live-action actors. It uses still images plus overlays, captions, and edit-plan timing — not full AI-generated motion video.
+This stage generated stylized still images and assembled them into a simple visual animatic using MoviePy. It did not generate true AI motion video clips.
 
----
+### v0.5 — Full Sora-assisted video prototype
 
-## What changed in v0.3.1
+Version 0.5 extends the pipeline with optional real video generation:
 
-* Added stronger visual direction toward a stylized 3D family-animation look.
-* Reduced photorealistic live-action output by steering prompts away from realistic actors.
-* Improved the Streamlit flow so Step 2 and Step 3 buttons no longer become mysteriously disabled.
-* Updated the Generated Images tab to show both raw generated images and MP4-ready assembled frames.
-* Improved the project framing as a visual animatic prototype rather than a full AI video generator.
-- Added screenshots documenting the generated scene images and the assembled visual animatic MP4.
+```text
+Premise
+→ structured story package
+→ script
+→ storyboard
+→ scene image prompts
+→ generated still images
+→ visual animatic MP4
+→ optional Sora clip per storyboard shot
+→ concatenated full video output
+```
+
+The visual animatic remains the fast, reliable default workflow. The Sora step is optional and explicitly gated because video generation is slower and can incur higher API costs.
+
 
 ---
 
@@ -127,6 +158,9 @@ flowchart TD
     L --> M[MoviePy / PIL assembler]
     J --> M
     M --> N[Visual animatic MP4]
+    H --> P[Optional Sora video client]
+    P --> Q[One real motion clip per shot]
+    Q --> R[Concatenated full Sora MP4]
     E --> O[Markdown + JSON exports]
 ```
 
@@ -152,6 +186,7 @@ Then add your API key:
 OPENAI_API_KEY = "your-key-here"
 OPENAI_MODEL = "gpt-4.1-mini"
 OPENAI_IMAGE_MODEL = "gpt-image-1"
+OPENAI_VIDEO_MODEL = "sora-2"
 ```
 
 Run:
@@ -171,7 +206,8 @@ If no API key is provided, or if you want to test without spending credits, the 
 3. Review the generated tabs: story brief, script, storyboard, visual prompts, continuity, and edit plan.
 4. Click **Step 2 — Generate scene images**.
 5. Click **Step 3 — Assemble MP4 from current run**.
-6. Download the JSON and Markdown exports from the **Exports** tab.
+6. Optional: enable both Sora safety toggles in the sidebar and click **Step 4 — Generate full real Sora video**.
+7. Download the JSON and Markdown exports from the **Exports** tab.
 
 Each run is saved into a timestamped folder under:
 
@@ -189,7 +225,7 @@ Generate a sample package, placeholder images, and MP4 without Streamlit:
 .venv\Scripts\python.exe scripts\generate_sample.py
 ```
 
-The app uses run-specific folders such as:
+The app now uses run-specific folders such as:
 
 ```text
 outputs/
@@ -199,7 +235,8 @@ outputs/
         ├── story_package.md
         ├── images/
         ├── frames/
-        └── moonlit_showrunner_animatic.mp4
+        ├── moonlit_showrunner_animatic.mp4
+        └── sora_video/          # optional full real motion video output
 ```
 
 Curated earlier outputs can still live under:
@@ -242,25 +279,25 @@ moonlit-showrunner/
 
 ## Current limitations
 
-* v0.3.1 does **not** generate full AI motion video clips.
-* The final MP4 is assembled from still images or fallback scene cards.
-* Character consistency is guided through prompts and the style bible, but not fully enforced like a dedicated animation pipeline would.
-* Audio is still represented as edit-plan guidance rather than a fully generated soundtrack.
-* The current image generation step does not yet include iterative review or shot regeneration controls.
-* The visual result depends on the image model’s interpretation of the generated prompts.
+* The Sora video workflow generates one clip per storyboard shot, then concatenates the clips into a full MP4; it is not yet a fully continuous single-shot film generation pipeline.
+* Character appearance consistency across Sora-generated clips is guided through prompts and the style bible, but not yet fully enforced like a dedicated character-locking or animation production pipeline.
+* The visual animatic MP4 remains useful as a fast preview, but it is assembled from still images, captions, overlays, and edit-plan timing rather than true motion video.
+* Audio is still represented as edit-plan guidance rather than a fully generated soundtrack, voiceover, or sound design layer.
+* The image and video generation steps do not yet include built-in review controls for regenerating only one specific shot from inside the app.
+* The Sora workflow is intentionally gated with safety toggles because video generation can be slower and more expensive than text or image generation.
 
 ---
 
 ## Planned improvements
 
-* stronger review controls for regenerating only one scene image
-* selective prompt editing before image generation
-* optional caption styling controls
-* improved pan/zoom and transition effects in the animatic
-* optional voiceover or soundtrack layer
-* optional export of a production bible
-* future integration with true AI video generation
-* polished blog article / portfolio write-up
+* Add review controls for regenerating a single scene image or Sora video shot without rerunning the full pipeline.
+* Add stronger character-consistency controls through reusable character reference prompts, shot-level continuity checks, and optional visual reference assets.
+* Add selective prompt editing before image or video generation.
+* Improve the visual animatic with richer pan/zoom effects, transitions, caption styling, and pacing controls.
+* Add optional voiceover, soundtrack, or sound-design generation.
+* Add clearer run comparison tools for evaluating different versions of the same story.
+* Prepare a polished blog article / portfolio write-up explaining the architecture, design choices, limitations, and next steps.
+
 
 ---
 

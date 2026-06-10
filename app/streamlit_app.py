@@ -14,17 +14,37 @@ st.set_page_config(
 )
 
 st.title("Moonlit Showrunner")
-st.caption("An AI-assisted short-drama pipeline from premise to visual animatic MP4")
+st.caption("An AI-assisted short-drama pipeline from premise to visual animatic MP4, with optional full real Sora video generation")
 
 st.info(
     "**Version note:** v0.3.1 generates a structured story package, can generate stylized 3D scene images, and assembles a visual animatic MP4. "
-    "It does **not** yet create true AI-generated motion video clips. The final MP4 is assembled from still images or fallback scene cards."
+    "The main MP4 is assembled from still images or fallback scene cards. v0.5 adds an optional Sora step that can generate one real motion clip per storyboard shot and concatenate them into a full MP4."
 )
 
 with st.sidebar:
     st.header("Settings")
     model = st.text_input("OpenAI text model", value=st.secrets.get("OPENAI_MODEL", "gpt-4.1-mini"))
     image_model = st.text_input("OpenAI image model", value=st.secrets.get("OPENAI_IMAGE_MODEL", "gpt-image-1"))
+    video_model = st.text_input("OpenAI video model", value=st.secrets.get("OPENAI_VIDEO_MODEL", "sora-2"))
+    sora_enabled = st.checkbox(
+        "Enable Sora video generation",
+        value=False,
+        help="This calls the Videos API and can cost noticeably more than text/image testing. Keep it off unless you intentionally want real motion video.",
+    )
+    full_sora_enabled = st.checkbox(
+        "I understand: generate FULL Sora video",
+        value=False,
+        help="Safety gate. Full video generation renders several clips and may be slow/costly.",
+    )
+    sora_seconds = st.selectbox("Seconds per Sora clip", options=["4", "8", "12", "16", "20"], index=0)
+    sora_size = st.selectbox("Sora size", options=["1280x720", "720x1280"], index=0)
+    max_sora_shots = st.slider(
+        "Maximum Sora shots to render",
+        min_value=1,
+        max_value=6,
+        value=6,
+        help="Use 1 or 2 for tests; 6 renders the full current storyboard.",
+    )
     use_mock = st.checkbox(
         "Use built-in mock mode",
         value=False,
@@ -33,14 +53,15 @@ with st.sidebar:
     st.markdown("---")
     st.write("Pipeline")
     st.code(
-        "Premise → story package → scene images → visual animatic MP4",
+        "Premise → story package → scene images → animatic MP4 → optional full Sora video",
         language="text",
     )
     st.write("Recommended order")
     st.markdown(
         "1. **Generate story package**\n"
         "2. **Generate scene images**\n"
-        "3. **Assemble MP4 from current run**"
+        "3. **Assemble MP4 from current run**\n"
+        "4. Optional: **Generate full real Sora video**"
     )
 
 premise = st.text_area("Story premise", value=SAMPLE_PREMISE, height=150)
@@ -53,16 +74,24 @@ if "run_dir" not in st.session_state:
     st.session_state.run_dir = None
 if "image_paths" not in st.session_state:
     st.session_state.image_paths = []
+if "sora_video_path" not in st.session_state:
+    st.session_state.sora_video_path = None
+if "sora_clip_paths" not in st.session_state:
+    st.session_state.sora_clip_paths = []
+if "sora_prompt" not in st.session_state:
+    st.session_state.sora_prompt = None
 
-col_a, col_b, col_c = st.columns([1.25, 1.1, 1.3])
+col_a, col_b, col_c, col_d = st.columns([1.25, 1.1, 1.3, 1.25])
 with col_a:
     generate_clicked = st.button("Step 1 — Generate story package", type="primary")
 with col_b:
     image_clicked = st.button("Step 2 — Generate scene images")
 with col_c:
     video_clicked = st.button("Step 3 — Assemble MP4 from current run")
+with col_d:
+    sora_clicked = st.button("Step 4 — Generate full real Sora video")
 
-pipeline = MoonlitPipeline(model=model, image_model=image_model)
+pipeline = MoonlitPipeline(model=model, image_model=image_model, video_model=video_model)
 
 if generate_clicked:
     with st.spinner("Generating structured short-drama package..."):
@@ -73,6 +102,9 @@ if generate_clicked:
         st.session_state.video_path = None
         st.session_state.run_dir = str(run_dir)
         st.session_state.image_paths = []
+        st.session_state.sora_video_path = None
+        st.session_state.sora_clip_paths = []
+        st.session_state.sora_prompt = None
     st.success(f"Story package generated. Current run folder: {st.session_state.run_dir}")
 
 package = st.session_state.story_package
@@ -80,9 +112,11 @@ run_dir = Path(st.session_state.run_dir) if st.session_state.run_dir else None
 
 if package:
     st.caption(f"Current run: `{run_dir}`" if run_dir else "")
+    max_shot_for_sora = max(1, len(package.video_prompts))
+    st.caption(f"Full Sora mode will render up to {min(max_sora_shots, max_shot_for_sora)} shot(s) from the storyboard.")
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "Story brief", "Script", "Storyboard", "Visual prompts", "Generated images", "Continuity", "Edit plan", "Exports"
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+        "Story brief", "Script", "Storyboard", "Visual prompts", "Generated images", "Continuity", "Edit plan", "Real video", "Exports"
     ])
 
     with tab1:
@@ -193,6 +227,28 @@ if package:
         st.json(package.token_budget.model_dump())
 
     with tab8:
+        st.markdown("### Optional full real motion video")
+        st.write(
+            "This step uses the OpenAI Videos API / Sora to render one real motion clip per storyboard shot, "
+            "then concatenates the clips into a full MP4. Use 4-second clips and 1–2 shots first to control cost and latency."
+        )
+        if st.session_state.sora_clip_paths:
+            st.markdown("#### Individual Sora clips")
+            for clip_path in st.session_state.sora_clip_paths:
+                clip_path = Path(clip_path)
+                if clip_path.exists():
+                    st.video(str(clip_path))
+                    st.caption(str(clip_path))
+        if st.session_state.sora_video_path:
+            sora_path = Path(st.session_state.sora_video_path)
+            if sora_path.exists():
+                st.success(f"Full Sora video created: {sora_path}")
+                st.video(str(sora_path))
+                st.download_button("Download full Sora MP4", sora_path.read_bytes(), file_name=sora_path.name, mime="video/mp4")
+        else:
+            st.info("No full Sora video generated yet. Enable both Sora safety toggles in the sidebar, then click Step 4.")
+
+    with tab9:
         json_data = package.model_dump_json(indent=2)
         md_data = package.to_markdown()
         st.download_button("Download story_package.json", json_data, file_name="story_package.json")
@@ -218,9 +274,40 @@ if video_clicked:
             st.session_state.video_path = str(video_path)
         st.success(f"MP4 created: {video_path}")
 
+
+if sora_clicked:
+    if not package or not run_dir:
+        st.error("Generate a story package first.")
+    elif not sora_enabled or not full_sora_enabled:
+        st.error("Enable both Sora safety toggles in the sidebar first. This prevents accidental paid full-video calls.")
+    else:
+        st.warning(
+            f"Starting full Sora generation: up to {max_sora_shots} clip(s), {sora_seconds}s each. "
+            "This may take several minutes per clip."
+        )
+        with st.spinner("Generating full Sora video. This may take a long time..."):
+            result = pipeline.generate_full_real_video(
+                package,
+                output_dir=run_dir,
+                model=video_model,
+                size=sora_size,
+                seconds_per_clip=sora_seconds,
+                max_shots=max_sora_shots,
+            )
+            st.session_state.sora_clip_paths = [str(p) for p in result["clips"]]
+            st.session_state.sora_video_path = str(result["full_video"])
+        st.success(f"Full Sora video created: {st.session_state.sora_video_path}")
+
 if st.session_state.video_path:
     path = Path(st.session_state.video_path)
     if path.exists():
-        st.markdown("### Current MP4")
+        st.markdown("### Current animatic MP4")
         st.video(str(path))
-        st.download_button("Download MP4", path.read_bytes(), file_name=path.name, mime="video/mp4")
+        st.download_button("Download animatic MP4", path.read_bytes(), file_name=path.name, mime="video/mp4")
+
+if st.session_state.sora_video_path:
+    sora_path = Path(st.session_state.sora_video_path)
+    if sora_path.exists():
+        st.markdown("### Current full real Sora video")
+        st.video(str(sora_path))
+        st.download_button("Download full Sora MP4", sora_path.read_bytes(), file_name=sora_path.name, mime="video/mp4", key="download_full_sora_mp4_bottom",)
