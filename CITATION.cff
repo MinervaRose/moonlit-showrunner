@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use or reference this project, please cite the archived Zenodo release."
+title: "Moonlit Showrunner v0.7.3: A Kitten-Centered AI Short-Film Pipeline with Character Locking and Sora Video Generation"
+type: software
+authors:
+  - family-names: "Palis"
+    given-names: "Sabrina"
+version: "0.7.3"
+date-released: "2026-06-10"
+repository-code: "https://github.com/MinervaRose/moonlit-showrunner"
+url: "https://zenodo.org/records/20633401"
+doi: "10.5281/zenodo.20633401"
+license: "MIT"
+keywords:
+  - generative AI
+  - AI video
+  - Sora
+  - OpenAI
+  - Streamlit
+  - Python
+  - creative coding
+  - AI storytelling
+  - human-in-the-loop AI
+  - character continuity
+  - prompt engineering
+  - structured outputs
+  - visual animatic
+  - video generation
+  - AI-assisted production
+abstract: >-
+  Moonlit Showrunner is an AI-assisted short-film prototyping pipeline built
+  with Python and Streamlit. Starting from a story premise, the system generates
+  a structured story package, character profiles, a script, storyboard, visual
+  prompts, continuity notes, reusable character reference cards, generated scene
+  images, a visual animatic MP4, and optional Sora video clips assembled into a
+  final video output. Version 0.7.3 focuses on the kitten-centered version of
+  the project, following Milo, a small kitten who loses his first tooth and
+  discovers a moonlit fairy archive. This release explores character continuity,
+  creative workflow control, moderation-aware Sora prompt sanitization, and
+  human-in-the-loop AI-assisted production.

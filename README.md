@@ -8,6 +8,8 @@
 ![Status](https://img.shields.io/badge/status-v0.7.3%20kitten%20prototype-yellow)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20633401.svg)](https://doi.org/10.5281/zenodo.20633401)
+
 **An AI-assisted short-drama pipeline from premise to character-locked visual animatic and optional Sora-generated video output.**
 
 Moonlit Showrunner turns a magical story premise into a structured short-drama production package, reusable character reference cards, continuity-aware scene prompts, generated images, a visual animatic MP4, and an optional full Sora-assisted video output.
