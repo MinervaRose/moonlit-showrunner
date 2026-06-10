@@ -4,7 +4,7 @@
 Moonlit Showrunner is an AI-assisted short-drama pipeline. It turns a simple premise into a production-ready package: script, storyboard, visual prompts, continuity notes, edit plan, and an assembled MP4.
 
 ## 0:20–0:50 — Input premise
-Show the sample premise about the little girl, the lost tooth, and the moonlit fairy archive.
+Show the sample premise about the kitten, the lost tooth, and the moonlit fairy archive.
 
 ## 0:50–1:30 — Generated production package
 Walk through the generated tabs: story brief, characters, scenes, storyboard, visual style bible, and continuity report.

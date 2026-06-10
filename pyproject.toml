@@ -1,7 +1,7 @@
 [project]
 name = "moonlit-showrunner"
-version = "0.1.0"
-description = "An AI-assisted short-drama pipeline from premise to MP4."
+version = "0.7.2"
+description = "A kitten-centered character-locking AI short-drama pipeline from premise to visual animatic and optional Sora video."
 requires-python = ">=3.10"
 license = {text = "MIT"}
 

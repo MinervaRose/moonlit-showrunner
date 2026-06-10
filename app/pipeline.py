@@ -37,9 +37,13 @@ class MoonlitPipeline:
         md_path.write_text(package.to_markdown(), encoding="utf-8")
         return {"json": json_path, "markdown": md_path}
 
-    def generate_images(self, package: StoryPackage, output_dir: Path, use_mock: bool = False) -> list[Path]:
+    def generate_character_references(self, package: StoryPackage, output_dir: Path, use_mock: bool = False) -> dict[str, Path]:
         output_dir.mkdir(parents=True, exist_ok=True)
-        return self.image_client.generate_scene_images(package=package, output_dir=output_dir, use_mock=use_mock)
+        return self.image_client.generate_character_reference_cards(package=package, output_dir=output_dir, use_mock=use_mock)
+
+    def generate_images(self, package: StoryPackage, output_dir: Path, use_mock: bool = False, character_reference_paths: Optional[dict[str, Path]] = None) -> list[Path]:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return self.image_client.generate_scene_images(package=package, output_dir=output_dir, use_mock=use_mock, character_reference_paths=character_reference_paths)
 
 
     def create_sora_prompt(self, package: StoryPackage, shot_number: int = 1) -> str:
@@ -97,6 +101,7 @@ def run_full_pipeline(premise: str, use_mock: bool = False, output_dir: Optional
     actual_output_dir = output_dir or pipeline.create_run_dir()
     package = pipeline.generate(premise=premise, use_mock=use_mock)
     saved = pipeline.save_package(package, output_dir=actual_output_dir)
-    images = pipeline.generate_images(package, output_dir=actual_output_dir, use_mock=use_mock)
+    refs = pipeline.generate_character_references(package, output_dir=actual_output_dir, use_mock=use_mock)
+    images = pipeline.generate_images(package, output_dir=actual_output_dir, use_mock=use_mock, character_reference_paths=refs)
     video_path = pipeline.create_video(package, output_dir=actual_output_dir)
     return {"package": package, "files": saved, "images": images, "video": video_path, "run_dir": actual_output_dir}

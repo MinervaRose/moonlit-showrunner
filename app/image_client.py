@@ -4,11 +4,13 @@ import base64
 import os
 import textwrap
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
+from app.character_locking import build_character_reference_prompt, create_mock_character_reference_card, save_reference_manifest, slugify_name
+from app.continuity import build_full_continuity_prompt_block
 from app.schemas import StoryPackage, VideoPrompt
 
 load_dotenv()
@@ -83,15 +85,24 @@ def create_mock_prompt_image(prompt: VideoPrompt, package: StoryPackage, out_pat
     img.convert("RGB").save(out_path, quality=95)
     return out_path
 
-def build_stylized_image_prompt(prompt_text: str) -> str:
-    """Wrap a shot prompt in a consistent non-photorealistic visual style."""
+
+
+def build_scene_image_prompt(prompt_text: str, continuity_block: str = "", reference_names: str = "") -> str:
+    ref_note = f"Use the approved character reference cards for {reference_names} as the identity anchor. " if reference_names else ""
     return (
         "Create a stylized 3D animated family-film frame, not photorealistic live action. "
         "Use expressive child-friendly character design, rounded forms, soft painterly textures, "
         "warm magical lighting, whimsical storybook atmosphere, cinematic composition, high visual clarity. "
         "Avoid realistic human actors, uncanny faces, horror, harsh realism, and documentary style. "
+        "Preserve character identity, costume, proportions, color palette, and environment continuity from the continuity bible. "
+        f"{ref_note}{continuity_block} "
         f"Scene prompt: {prompt_text}"
     )
+
+
+def _names_for_shot(package: StoryPackage, shot_number: int) -> list[str]:
+    note = next((n for n in package.shot_continuity_notes if n.shot_number == shot_number), None)
+    return note.characters_present if note else []
 
 
 class OpenAIImageClient:
@@ -113,12 +124,63 @@ class OpenAIImageClient:
     def has_api_key(self) -> bool:
         return bool(self.api_key)
 
+    def generate_character_reference_cards(
+        self,
+        package: StoryPackage,
+        output_dir: Path,
+        use_mock: bool = False,
+        size: str = "1024x1024",
+    ) -> Dict[str, Path]:
+        refs_dir = output_dir / "character_references"
+        refs_dir.mkdir(parents=True, exist_ok=True)
+
+        created: Dict[str, Path] = {}
+        for profile in package.character_continuity_profiles:
+            slug = slugify_name(profile.name)
+            out_path = refs_dir / f"{slug}_reference.png"
+            prompt_path = refs_dir / f"{slug}_reference_prompt.txt"
+            prompt_text = build_character_reference_prompt(profile, package)
+            prompt_path.write_text(prompt_text, encoding="utf-8")
+
+            if use_mock or not self._client:
+                create_mock_character_reference_card(profile, out_path)
+                created[profile.name] = out_path
+                continue
+
+            result = self._client.images.generate(
+                model=self.image_model,
+                prompt=prompt_text,
+                size=size,
+            )
+            data = result.data[0]
+            if getattr(data, "b64_json", None):
+                image_bytes = base64.b64decode(data.b64_json)
+                out_path.write_bytes(image_bytes)
+                created[profile.name] = out_path
+            else:
+                raise RuntimeError(f"Character reference generation failed for {profile.name}.")
+
+        save_reference_manifest(created, output_dir)
+        return created
+
+    def _reference_paths_for_shot(
+        self,
+        package: StoryPackage,
+        shot_number: int,
+        character_reference_paths: Optional[Dict[str, Path]] = None,
+    ) -> List[Path]:
+        if not character_reference_paths:
+            return []
+        relevant_names = _names_for_shot(package, shot_number)
+        return [character_reference_paths[name] for name in relevant_names if name in character_reference_paths]
+
     def generate_scene_images(
         self,
         package: StoryPackage,
         output_dir: Path,
         use_mock: bool = False,
         size: str = "1536x1024",
+        character_reference_paths: Optional[Dict[str, Path]] = None,
     ) -> List[Path]:
         images_dir = output_dir / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
@@ -131,11 +193,44 @@ class OpenAIImageClient:
                 created.append(out_path)
                 continue
 
-            result = self._client.images.generate(
-                model=self.image_model,
-                prompt=build_stylized_image_prompt(prompt.prompt),
-                size=size,
+            ref_paths = self._reference_paths_for_shot(package, prompt.shot_number, character_reference_paths)
+            ref_names = ", ".join([p.stem.replace("_reference", "").replace("_", " ") for p in ref_paths])
+            prompt_text = build_scene_image_prompt(
+                prompt.prompt,
+                continuity_block=build_full_continuity_prompt_block(package, prompt.shot_number),
+                reference_names=ref_names,
             )
+            prompt_file = images_dir / f"shot_{prompt.shot_number:02d}_prompt.txt"
+            prompt_file.write_text(prompt_text, encoding="utf-8")
+
+            result = None
+            if ref_paths and hasattr(self._client.images, "edit"):
+                files = [open(path, "rb") for path in ref_paths]
+                try:
+                    result = self._client.images.edit(
+                        model=self.image_model,
+                        image=files,
+                        prompt=prompt_text,
+                        size=size,
+                    )
+                except Exception:
+                    result = self._client.images.generate(
+                        model=self.image_model,
+                        prompt=prompt_text,
+                        size=size,
+                    )
+                finally:
+                    for f in files:
+                        try:
+                            f.close()
+                        except Exception:
+                            pass
+            else:
+                result = self._client.images.generate(
+                    model=self.image_model,
+                    prompt=prompt_text,
+                    size=size,
+                )
 
             data = result.data[0]
             if getattr(data, "b64_json", None):

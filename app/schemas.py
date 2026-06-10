@@ -12,6 +12,37 @@ class Character(BaseModel):
     visual_notes: str
 
 
+
+
+class CharacterContinuityProfile(BaseModel):
+    name: str
+    stable_identity: str
+    face_and_body: str
+    hair_and_eyes: str
+    clothing_and_props: str
+    expression_and_movement: str
+    do_not_change: List[str]
+
+
+class GlobalContinuityLock(BaseModel):
+    visual_style_lock: str
+    character_locking_rules: str
+    palette_and_lighting_lock: str
+    environment_rules: str
+    negative_continuity_rules: str
+
+
+class ShotContinuityNote(BaseModel):
+    shot_number: int
+    characters_present: List[str]
+    continuity_from_previous_shot: str
+    required_character_details: str
+    props_and_costume_state: str
+    environment_state: str
+    consistency_risk: str
+    prompt_anchor: str
+
+
 class StoryBrief(BaseModel):
     title: str
     logline: str
@@ -88,6 +119,9 @@ class StoryPackage(BaseModel):
     scenes: List[Scene]
     storyboard: List[StoryboardShot]
     visual_style_bible: VisualStyleBible
+    character_continuity_profiles: List[CharacterContinuityProfile]
+    global_continuity_lock: GlobalContinuityLock
+    shot_continuity_notes: List[ShotContinuityNote]
     video_prompts: List[VideoPrompt]
     continuity_report: ContinuityReport
     edit_decisions: List[EditDecision]
@@ -135,6 +169,37 @@ class StoryPackage(BaseModel):
         lines.append(f"- **Lighting:** {self.visual_style_bible.lighting_rules}")
         lines.append(f"- **Character consistency:** {self.visual_style_bible.character_consistency_rules}")
         lines.append(f"- **World design:** {self.visual_style_bible.world_design_notes}\n")
+
+        lines.append("\n## Character Continuity Bible\n")
+        for profile in self.character_continuity_profiles:
+            lines.append(f"### {profile.name}")
+            lines.append(f"- **Stable identity:** {profile.stable_identity}")
+            lines.append(f"- **Face and body:** {profile.face_and_body}")
+            lines.append(f"- **Hair and eyes:** {profile.hair_and_eyes}")
+            lines.append(f"- **Clothing and props:** {profile.clothing_and_props}")
+            lines.append(f"- **Expression and movement:** {profile.expression_and_movement}")
+            lines.append("- **Do not change:**")
+            for rule in profile.do_not_change:
+                lines.append(f"  - {rule}")
+            lines.append("")
+
+        lines.append("\n## Global Continuity Lock\n")
+        lines.append(f"- **Visual style lock:** {self.global_continuity_lock.visual_style_lock}")
+        lines.append(f"- **Character locking rules:** {self.global_continuity_lock.character_locking_rules}")
+        lines.append(f"- **Palette and lighting lock:** {self.global_continuity_lock.palette_and_lighting_lock}")
+        lines.append(f"- **Environment rules:** {self.global_continuity_lock.environment_rules}")
+        lines.append(f"- **Negative continuity rules:** {self.global_continuity_lock.negative_continuity_rules}\n")
+
+        lines.append("\n## Shot Continuity Notes\n")
+        for note in self.shot_continuity_notes:
+            lines.append(f"### Shot {note.shot_number}")
+            lines.append(f"- **Characters present:** {', '.join(note.characters_present)}")
+            lines.append(f"- **From previous shot:** {note.continuity_from_previous_shot}")
+            lines.append(f"- **Required character details:** {note.required_character_details}")
+            lines.append(f"- **Props/costume state:** {note.props_and_costume_state}")
+            lines.append(f"- **Environment state:** {note.environment_state}")
+            lines.append(f"- **Consistency risk:** {note.consistency_risk}")
+            lines.append(f"- **Prompt anchor:** {note.prompt_anchor}\n")
 
         lines.append("\n## Video Prompts\n")
         for vp in self.video_prompts:
