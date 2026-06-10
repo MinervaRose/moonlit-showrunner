@@ -345,6 +345,14 @@ The project is intentionally honest about its current scope: it is a **working p
 
 ---
 
+## Project write-up
+
+I wrote a Medium article about the making of this project, including the design process, the Sora video workflow, the character-continuity problem, and the unexpectedly funny tooth-fairy window-frame moment:
+
+[The Kitten, the Tooth Fairy, and the Window Frame](https://medium.com/@sabrina.jorgenson/the-kitten-the-tooth-fairy-and-the-window-frame-57d1ddb3c9bb)
+
+---
+
 ## License
 
 This project is released under the MIT License.
