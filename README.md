@@ -22,7 +22,7 @@ It currently generates:
 * scene image prompts
 * continuity report
 * edit decision list
-* stylized 3D animated still images for each shot
+* stylized 3D animated still images for each shot, displayed in the app and reused in the MP4 animatic
 * MP4-ready frames with overlays, captions, and timing
 * visual animatic MP4 assembled from still images or fallback scene cards
 
@@ -39,6 +39,8 @@ Sample premise:
 > A little girl places her first lost tooth under her pillow, afraid that growing up means losing pieces of herself. At midnight, the tooth opens a tiny moonlit doorway into a hidden fairy archive where children’s memories become stars. By morning, she finds a coin and a faint sparkle on the windowsill, while the viewer sees the tooth fairy slipping into the dawn.
 
 ---
+
+## Screenshots
 
 ## Screenshots
 
@@ -61,6 +63,17 @@ Sample premise:
 
 ![Edit plan](assets/screenshots/image-8.png)
 ![Exports tab](assets/screenshots/image-10.png)
+
+### v0.3.1 visual animatic output
+
+The v0.3.1 prototype adds generated stylized scene images and assembles them into a visual animatic MP4.
+
+![Generated scene images](assets/screenshots/image-12.png)
+
+![MP4 successfully created](assets/screenshots/image-11.png)
+
+![Scene 5 from the visual animatic MP4](assets/screenshots/image-13.png)
+
 
 ---
 
@@ -92,6 +105,7 @@ The generated MP4 is currently a **prototype animatic**. The image prompts are b
 * Improved the Streamlit flow so Step 2 and Step 3 buttons no longer become mysteriously disabled.
 * Updated the Generated Images tab to show both raw generated images and MP4-ready assembled frames.
 * Improved the project framing as a visual animatic prototype rather than a full AI video generator.
+- Added screenshots documenting the generated scene images and the assembled visual animatic MP4.
 
 ---
 
